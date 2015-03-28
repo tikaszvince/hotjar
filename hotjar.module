@@ -1,0 +1,173 @@
+<?php
+/**
+ * @file
+ * Drupal Module: Hotjar
+ *
+ * Adds the required Javascript to all your Drupal pages to allow
+ * tracking by hotjar (https://www.hotjar.com/).
+ */
+
+/**
+ * Define default path exclusion list to remove tracking from admin pages,
+ * see http://drupal.org/node/34970 for more information.
+ */
+define('HOTJAR_PAGES', "admin\nadmin/*\nbatch\nnode/add*\nnode/*/*\nuser/*/*");
+
+/**
+ * Implements hook_help().
+ */
+function hotjar_help($path, $arg) {
+  switch ($path) {
+    case 'admin/config/system/hotjar':
+      return t('<a href="@hotjar_url">Hotjar</a> is a new powerful way to reveal true website user behaviour and experiences in one central tool – giving you the big picture of how you can improve your site\'s UX and conversion rates. All your data is securely stored in the cloud and is accessible at lightning speed.', array('@hotjar_url' => 'https://www.hotjar.com/'));
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function hotjar_permission() {
+  return array(
+    'administer hotjar' => array(
+      'title' => t('Administer Hotjar'),
+      'description' => t('Perform maintenance tasks for Hotjar.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function hotjar_menu() {
+  $items['admin/config/system/hotjar'] = array(
+    'title' => 'Hotjar',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('hotjar_admin_settings_form'),
+    'access arguments' => array('administer hotjar'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'hotjar.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_preprocess_html().
+ *
+ * Insert JavaScript to the appropriate scope/region of the page.
+ */
+function hotjar_process_html(&$variables) {
+  $id = variable_get('hotjar_account');
+
+  // Get page status code for visibility filtering.
+  $status = drupal_get_http_header('Status');
+  $not_tracked_status_codes = array(
+    '403 Forbidden',
+    '404 Not Found',
+  );
+
+  if (
+    !$id
+    || !_hotjar_should_be_added()
+    || in_array($status, $not_tracked_status_codes)
+    || !_hotjar_check_user()
+  ) {
+    return;
+  }
+
+  $variables['page_bottom'] .= <<<HJ
+<script>
+(function(f,b){
+  var c;
+  f.hj=f.hj||function(){(f.hj.q=f.hj.q||[]).push(arguments)};
+  f._hjSettings={hjid:{$id}, hjsv:3};
+  c=b.createElement("script");c.async=1;
+  c.src="//static.hotjar.com/c/hotjar-{$id}.js?sv=3";
+  b.getElementsByTagName("head")[0].appendChild(c);
+})(window,document);
+</script>
+HJ;
+
+}
+
+/**
+ * Check Hotjar code should be added.
+ */
+function _hotjar_should_be_added() {
+  $page_match = &drupal_static(__FUNCTION__);
+  if (isset($page_match)) {
+    return $page_match;
+  }
+
+  $visibility = variable_get('hotjar_visibility_pages', 0);
+  $setting_pages = variable_get('hotjar_pages', HOTJAR_PAGES);
+
+  if (empty($setting_pages)) {
+    $page_match = TRUE;
+    return $page_match;
+  }
+
+  $pages = drupal_strtolower($setting_pages);
+  if ($visibility < 2) {
+    $path = drupal_strtolower(drupal_get_path_alias($_GET['q']));
+    $page_match = drupal_match_path($path, $pages);
+    if ($path != $_GET['q']) {
+      $page_match = $page_match || drupal_match_path($_GET['q'], $pages);
+    }
+
+    // When $visibility has a value of 0, the tracking code is displayed on
+    // all pages except those listed in $pages. When set to 1, it
+    // is displayed only on those pages listed in $pages.
+    $page_match = !($visibility xor $page_match);
+  }
+  else {
+    $page_match = FALSE;
+  }
+
+  return $page_match;
+}
+
+/**
+ * Check Hotjar code should be added for user.
+ */
+function _hotjar_check_user($account = NULL) {
+  if (!isset($account)) {
+    $account = $GLOBALS['user'];
+  }
+
+  $enabled = FALSE;
+  if (_hotjar_check_roles($account)) {
+    $enabled = TRUE;
+  }
+
+  return $enabled;
+
+}
+
+/**
+ * Check user role.
+ */
+function _hotjar_check_roles($account = NULL) {
+  if (!isset($account)) {
+    $account = $GLOBALS['user'];
+  }
+
+  $visibility = variable_get('hotjar_visibility_roles');
+  $enabled = $visibility;
+  $roles = variable_get('hotjar_roles', array());
+
+  if (array_sum($roles) > 0) {
+    foreach (array_keys($account->roles) as $rid) {
+      if (isset($roles[$rid]) && $rid == $roles[$rid]) {
+        $enabled = !$visibility;
+        break;
+      }
+    }
+  }
+  else {
+    // No role is selected for tracking, therefore all roles should be tracked.
+    $enabled = TRUE;
+  }
+
+  return $enabled;
+}

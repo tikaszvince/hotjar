@@ -1,0 +1,7 @@
+name = Hotjar
+description = Allows your site to be tracked by Hotjar by adding a Javascript tracking code to every page.
+core = 7.x
+package = Statistics
+configure = admin/config/system/hotjar
+version = 7.x-0.1
+project = hotjar
