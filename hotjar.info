@@ -3,5 +3,4 @@ description = Allows your site to be tracked by Hotjar by adding a Javascript tr
 core = 7.x
 package = Statistics
 configure = admin/config/system/hotjar
-version = 7.x-1.0
 project = hotjar
