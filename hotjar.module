@@ -1,15 +1,16 @@
 <?php
 /**
  * @file
- * Drupal Module: Hotjar
+ * Drupal Module: Hotjar.
  *
  * Adds the required Javascript to all your Drupal pages to allow
  * tracking by hotjar (https://www.hotjar.com/).
  */
 
 /**
- * Define default path exclusion list to remove tracking from admin pages,
- * see http://drupal.org/node/34970 for more information.
+ * Define default path exclusion list to remove tracking from admin pages.
+ *
+ * See http://drupal.org/node/34970 for more information.
  */
 define('HOTJAR_PAGES', "admin\nadmin/*\nbatch\nnode/add*\nnode/*/*\nuser/*/*");
 
