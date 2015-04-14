@@ -13,7 +13,7 @@ INTRODUCTION
 Adds the Hotjar tracking system to your website.
 
 What is Hotjar?
-Hotjar is a new powerful way to reveal true website user behaviour and experiences in one central tool – giving you the big picture of how you can improve your site's UX and conversion rates. All your data is securely stored in the cloud and is accessible at lightning speed.
+Hotjar is a new powerful way to reveal real website user behaviour and experiences in one central tool – giving you the big picture of how you can improve your site's UX and conversion rates. All your data is stored securely in the cloud and is accessible at lightning speed.
 Reference to Hotjar and use of any brand elements do not equate to endorsement.
 
 This module was built for the Pistoncalendar.com website.
