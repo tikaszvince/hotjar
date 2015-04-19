@@ -60,17 +60,10 @@ function hotjar_menu() {
 function hotjar_process_html(&$variables) {
   $id = variable_get('hotjar_account');
 
-  // Get page status code for visibility filtering.
-  $status = drupal_get_http_header('Status');
-  $not_tracked_status_codes = array(
-    '403 Forbidden',
-    '404 Not Found',
-  );
-
   if (
     !$id
+    || !_hotjar_check_status()
     || !_hotjar_should_be_added()
-    || in_array($status, $not_tracked_status_codes)
     || !_hotjar_check_user()
   ) {
     return;
@@ -171,4 +164,17 @@ function _hotjar_check_roles($account = NULL) {
   }
 
   return $enabled;
+}
+
+/**
+ * Check current request HTTP status.
+ */
+function _hotjar_check_status() {
+  // Get page status code for visibility filtering.
+  $status = drupal_get_http_header('Status');
+  $not_tracked_status_codes = array(
+    '403 Forbidden',
+    '404 Not Found',
+  );
+  return !in_array($status, $not_tracked_status_codes);
 }
