@@ -27,12 +27,9 @@ function hotjar_help($path, $arg) {
 /**
  * Implements hook_permission().
  */
-function hotjar_permission() {
+function hotjar_perm() {
   return array(
-    'administer hotjar' => array(
-      'title' => t('Administer Hotjar'),
-      'description' => t('Perform maintenance tasks for Hotjar.'),
-    ),
+    'administer hotjar',
   );
 }
 
@@ -40,7 +37,7 @@ function hotjar_permission() {
  * Implements hook_menu().
  */
 function hotjar_menu() {
-  $items['admin/config/system/hotjar'] = array(
+  $items['admin/settings/hotjar'] = array(
     'title' => 'Hotjar',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('hotjar_admin_settings_form'),
@@ -53,12 +50,21 @@ function hotjar_menu() {
 }
 
 /**
- * Implements hook_preprocess_html().
+ * Implementation of hook_theme_registry_alter().
  *
+ * Borrowed from googleanalytics.
+ */
+function hotjar_theme_registry_alter(&$registry) {
+  // Add custom preprocess function to the beginning of the stack.
+  // This allows use of the drupal_add_js() function before $vars is populated.
+  array_unshift($registry['page']['preprocess functions'], 'hotjar_add_js');
+}
+
+/**
  * Insert JavaScript to the appropriate scope/region of the page.
  */
-function hotjar_process_html(&$variables) {
-  $id = variable_get('hotjar_account');
+function hotjar_add_js(&$variables, $hook) {
+  $id = variable_get('hotjar_account', '');
 
   if (
     !$id
@@ -69,26 +75,25 @@ function hotjar_process_html(&$variables) {
     return;
   }
 
-  $variables['page_bottom'] .= <<<HJ
-<script>
-(function(f,b){
-  var c;
-  f.hj=f.hj||function(){(f.hj.q=f.hj.q||[]).push(arguments)};
-  f._hjSettings={hjid:{$id}, hjsv:3};
-  c=b.createElement("script");c.async=1;
-  c.src="//static.hotjar.com/c/hotjar-{$id}.js?sv=3";
-  b.getElementsByTagName("head")[0].appendChild(c);
-})(window,document);
-</script>
+  $hotjar_js = <<<HJ
+  (function(f,b){
+      var c;
+      f.hj=f.hj||function(){(f.hj.q=f.hj.q||[]).push(arguments)};
+      f._hjSettings={hjid:{$id}, hjsv:4};
+      c=b.createElement("script");c.async=1;
+      c.src="//static.hotjar.com/c/hotjar-"+f._hjSettings.hjid+".js?sv="+f._hjSettings.hjsv;
+      b.getElementsByTagName("head")[0].appendChild(c);
+  })(window,document);
 HJ;
-
+  drupal_add_js($hotjar_js, 'inline', 'footer');
 }
 
 /**
  * Check Hotjar code should be added.
  */
 function _hotjar_should_be_added() {
-  $page_match = &drupal_static(__FUNCTION__);
+  static $page_match;
+
   if (isset($page_match)) {
     return $page_match;
   }
@@ -146,10 +151,9 @@ function _hotjar_check_roles($account = NULL) {
     $account = $GLOBALS['user'];
   }
 
-  $visibility = variable_get('hotjar_visibility_roles');
+  $visibility = variable_get('hotjar_visibility_roles', 0);
   $enabled = $visibility;
   $roles = variable_get('hotjar_roles', array());
-
   if (array_sum($roles) > 0) {
     foreach (array_keys($account->roles) as $rid) {
       if (isset($roles[$rid]) && $rid == $roles[$rid]) {
@@ -171,10 +175,30 @@ function _hotjar_check_roles($account = NULL) {
  */
 function _hotjar_check_status() {
   // Get page status code for visibility filtering.
-  $status = drupal_get_http_header('Status');
+  $headers = _hotjar_get_headers();
+  $status = $headers[':status'];
   $not_tracked_status_codes = array(
     '403 Forbidden',
     '404 Not Found',
   );
   return !in_array($status, $not_tracked_status_codes);
+}
+
+/**
+ * Get all headers.
+ */
+function _hotjar_get_headers() {
+  $header_array = array();
+  $headers = drupal_get_headers();
+  $exploded_headers = explode("\n", $headers);
+
+  foreach ($exploded_headers as $h) {
+    $matches = array();
+    preg_match('/^(.+):(.*)$/', $h, $matches);
+    if (count($matches) > 2) {
+      $header_array[strtolower($matches[1])] = trim($matches[2]);
+    }
+  }
+
+  return $header_array;
 }

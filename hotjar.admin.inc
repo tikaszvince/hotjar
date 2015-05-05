@@ -13,14 +13,17 @@ function hotjar_admin_settings_form($form_state) {
   $form['hotjar_account'] = array(
     '#title' => t('Hotjar ID'),
     '#type' => 'textfield',
-    '#default_value' => variable_get('hotjar_account'),
+    '#default_value' => variable_get('hotjar_account', ''),
     '#size' => 15,
     '#maxlength' => 20,
     '#required' => TRUE,
   );
 
   $form['tracking'] = array(
-    '#type' => 'vertical_tabs',
+    '#title' => t('Advanced Tracking Options'),
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
   );
 
   $visibility = variable_get('hotjar_visibility_pages', 0);
