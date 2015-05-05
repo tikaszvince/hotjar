@@ -13,7 +13,7 @@ function hotjar_admin_settings_form($form_state) {
   $form['hotjar_account'] = array(
     '#title' => t('Hotjar ID'),
     '#type' => 'textfield',
-    '#default_value' => variable_get('hotjar_account'),
+    '#default_value' => variable_get('hotjar_account', ''),
     '#size' => 15,
     '#maxlength' => 20,
     '#required' => TRUE,

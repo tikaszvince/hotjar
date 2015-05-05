@@ -58,7 +58,7 @@ function hotjar_menu() {
  * Insert JavaScript to the appropriate scope/region of the page.
  */
 function hotjar_process_html(&$variables) {
-  $id = variable_get('hotjar_account');
+  $id = variable_get('hotjar_account', NULL);
 
   if (
     !$id
@@ -146,7 +146,7 @@ function _hotjar_check_roles($account = NULL) {
     $account = $GLOBALS['user'];
   }
 
-  $visibility = variable_get('hotjar_visibility_roles');
+  $visibility = variable_get('hotjar_visibility_roles', NULL);
   $enabled = $visibility;
   $roles = variable_get('hotjar_roles', array());
 
