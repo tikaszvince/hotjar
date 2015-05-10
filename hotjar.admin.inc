@@ -11,6 +11,7 @@ function hotjar_admin_settings_form($form_state) {
   $form = array();
 
   $form['hotjar_account'] = array(
+    '#parents' => array('hotjar_settings', 'hotjar_account'),
     '#title' => t('Hotjar ID'),
     '#type' => 'textfield',
     '#default_value' => variable_get('hotjar_account', ''),
@@ -51,12 +52,14 @@ function hotjar_admin_settings_form($form_state) {
     $description = t("Specify pages by using their paths. Enter one path per line. The '*' character is a wildcard. Example paths are %blog for the blog page and %blog-wildcard for every personal blog. %front is the front page.", $description_args);
     $title = t('Pages');
     $form['tracking']['page_track']['hotjar_visibility_pages'] = array(
+      '#parents' => array('hotjar_settings', 'hotjar_visibility_pages'),
       '#type' => 'radios',
       '#title' => t('Add tracking to specific pages'),
       '#options' => $options,
       '#default_value' => $visibility,
     );
     $form['tracking']['page_track']['hotjar_pages'] = array(
+      '#parents' => array('hotjar_settings', 'hotjar_pages'),
       '#type' => 'textarea',
       '#title' => $title,
       '#title_display' => 'invisible',
@@ -73,6 +76,7 @@ function hotjar_admin_settings_form($form_state) {
   );
 
   $form['tracking']['role_track']['hotjar_visibility_roles'] = array(
+    '#parents' => array('hotjar_settings', 'hotjar_visibility_roles'),
     '#type' => 'radios',
     '#title' => t('Add tracking for specific roles'),
     '#options' => array(
@@ -84,6 +88,7 @@ function hotjar_admin_settings_form($form_state) {
 
   $role_options = array_map('check_plain', user_roles());
   $form['tracking']['role_track']['hotjar_roles'] = array(
+    '#parents' => array('hotjar_settings', 'hotjar_roles'),
     '#type' => 'checkboxes',
     '#title' => t('Roles'),
     '#default_value' => variable_get('hotjar_roles', array()),
