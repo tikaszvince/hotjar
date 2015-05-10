@@ -35,5 +35,5 @@ function hotjar_update_7001() {
   foreach ($variables as $name) {
     $variable[$name] = variable_get($name);
   }
-  variable_set('hotjar_settings', $variables);
+  variable_set('hotjar_settings', $variable);
 }
