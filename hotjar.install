@@ -1,0 +1,21 @@
+<?php
+/**
+ * @file
+ * Contains install, update and uninstall functions for Hotjar module.
+ */
+
+/**
+ * Removes Hotjar variables.
+ */
+function hotjar_uninstall() {
+  $variables = array(
+    'hotjar_account',
+    'hotjar_visibility_pages',
+    'hotjar_pages',
+    'hotjar_visibility_roles',
+    'hotjar_roles',
+  );
+  foreach ($variables as $variable) {
+    variable_del($variable);
+  }
+}
