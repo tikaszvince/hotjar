@@ -19,6 +19,7 @@ define('HOTJAR_PAGES', "admin\nadmin/*\nbatch\nnode/add*\nnode/*/*\nuser/*/*");
  */
 function hotjar_help($path, $arg) {
   switch ($path) {
+    case 'admin/help#hotjar':
     case 'admin/config/system/hotjar':
       return t('<a href="@hotjar_url">Hotjar</a> is a new powerful way to reveal true website user behaviour and experiences in one central tool – giving you the big picture of how you can improve your site\'s UX and conversion rates. All your data is securely stored in the cloud and is accessible at lightning speed.', array('@hotjar_url' => 'https://www.hotjar.com/'));
   }
@@ -50,7 +51,7 @@ function hotjar_menu() {
 }
 
 /**
- * Implementation of hook_theme_registry_alter().
+ * Implements hook_theme_registry_alter().
  *
  * Borrowed from googleanalytics.
  */
@@ -61,10 +62,26 @@ function hotjar_theme_registry_alter(&$registry) {
 }
 
 /**
+ * Get Hotjar settings.
+ */
+function hotjar_get_settings() {
+  $settings = variable_get('hotjar_settings', array());
+  $settings += array(
+    'hotjar_account' => NULL,
+    'hotjar_visibility_pages' => 0,
+    'hotjar_pages' => HOTJAR_PAGES,
+    'hotjar_visibility_roles' => 0,
+    'hotjar_roles' => array(),
+  );
+  return $settings;
+}
+
+/**
  * Insert JavaScript to the appropriate scope/region of the page.
  */
 function hotjar_add_js(&$variables, $hook) {
-  $id = variable_get('hotjar_account', '');
+  $settings = hotjar_get_settings();
+  $id = $settings['hotjar_account'];
 
   if (
     !$id
@@ -75,17 +92,21 @@ function hotjar_add_js(&$variables, $hook) {
     return;
   }
 
-  $hotjar_js = <<<HJ
-  (function(f,b){
-      var c;
-      f.hj=f.hj||function(){(f.hj.q=f.hj.q||[]).push(arguments)};
-      f._hjSettings={hjid:'{$id}', hjsv:4};
-      c=b.createElement("script");c.async=1;
-      c.src="//static.hotjar.com/c/hotjar-"+f._hjSettings.hjid+".js?sv="+f._hjSettings.hjsv;
-      b.getElementsByTagName("head")[0].appendChild(c);
-  })(window,document);
+  // Quote from the Hotjar dashboard:
+  // "The Tracking Code below should be placed in the <head> tag of
+  // every page you want to track on your site."
+  $tracking_code = <<<HJ
+(function(f,b){
+  var c;
+  f.hj=f.hj||function(){(f.hj.q=f.hj.q||[]).push(arguments)};
+  f._hjSettings={hjid:'{$id}', hjsv:4};
+  c=b.createElement("script");c.async=1;
+  c.src="//static.hotjar.com/c/hotjar-"+f._hjSettings.hjid+".js?sv="+f._hjSettings.hjsv;
+  b.getElementsByTagName("head")[0].appendChild(c);
+})(window,document);
 HJ;
-  drupal_add_js($hotjar_js, 'inline', 'header');
+
+  drupal_add_js($tracking_code, 'inline', 'header');
 }
 
 /**
@@ -98,8 +119,10 @@ function _hotjar_should_be_added() {
     return $page_match;
   }
 
-  $visibility = variable_get('hotjar_visibility_pages', 0);
-  $setting_pages = variable_get('hotjar_pages', HOTJAR_PAGES);
+  $settings = hotjar_get_settings();
+
+  $visibility = $settings['hotjar_visibility_pages'];
+  $setting_pages = $settings['hotjar_pages'];
 
   if (empty($setting_pages)) {
     $page_match = TRUE;
@@ -151,9 +174,18 @@ function _hotjar_check_roles($account = NULL) {
     $account = $GLOBALS['user'];
   }
 
-  $visibility = variable_get('hotjar_visibility_roles', 0);
+  $settings = hotjar_get_settings();
+
+  $visibility = $settings['hotjar_visibility_roles'];
   $enabled = $visibility;
-  $roles = variable_get('hotjar_roles', array());
+  $roles = $settings['hotjar_roles'];
+
+  // The hotjar_roles stores the selected roles as an array where
+  // the keys are the role IDs. When the role is not selected the
+  // value is 0. If a role is selected the value is the role ID.
+  // Checking if $roles is not suitable for us because the roles
+  // has keys. But if no role is selected the sum of the values
+  // is zero.
   if (array_sum($roles) > 0) {
     foreach (array_keys($account->roles) as $rid) {
       if (isset($roles[$rid]) && $rid == $roles[$rid]) {
