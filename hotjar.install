@@ -27,4 +27,9 @@ function hotjar_update_7001() {
     $variable[$name] = variable_get($name);
   }
   variable_set('hotjar_settings', $variable);
+
+  // Delete old variables.
+  foreach ($variables as $name) {
+    variable_del($name);
+  }
 }
