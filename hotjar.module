@@ -79,13 +79,13 @@ function hotjar_add_js(&$variables, $hook) {
   (function(f,b){
       var c;
       f.hj=f.hj||function(){(f.hj.q=f.hj.q||[]).push(arguments)};
-      f._hjSettings={hjid:{$id}, hjsv:4};
+      f._hjSettings={hjid:'{$id}', hjsv:4};
       c=b.createElement("script");c.async=1;
       c.src="//static.hotjar.com/c/hotjar-"+f._hjSettings.hjid+".js?sv="+f._hjSettings.hjsv;
       b.getElementsByTagName("head")[0].appendChild(c);
   })(window,document);
 HJ;
-  drupal_add_js($hotjar_js, 'inline', 'footer');
+  drupal_add_js($hotjar_js, 'inline', 'header');
 }
 
 /**
