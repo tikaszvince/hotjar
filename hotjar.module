@@ -69,11 +69,11 @@ function hotjar_get_settings() {
 }
 
 /**
- * Implements hook_preprocess_html().
+ * Implements hook_preprocess_page().
  *
- * Insert JavaScript to the appropriate scope/region of the page.
+ * Insert JavaScript to the <head> tag of the page.
  */
-function hotjar_process_html(&$variables) {
+function hotjar_preprocess_page(&$variables) {
   $settings = hotjar_get_settings();
   $id = $settings['hotjar_account'];
 
@@ -86,8 +86,10 @@ function hotjar_process_html(&$variables) {
     return;
   }
 
-  $variables['page_bottom'] .= <<<HJ
-<script>
+  // Quote from the Hotjar dashboard:
+  // "The Tracking Code below should be placed in the <head> tag of
+  // every page you want to track on your site."
+  $tracking_code = <<<HJ
 (function(f,b){
   var c;
   f.hj=f.hj||function(){(f.hj.q=f.hj.q||[]).push(arguments)};
@@ -96,9 +98,9 @@ function hotjar_process_html(&$variables) {
   c.src="//static.hotjar.com/c/hotjar-"+f._hjSettings.hjid+".js?sv="+f._hjSettings.hjsv;
   b.getElementsByTagName("head")[0].appendChild(c);
 })(window,document);
-</script>
 HJ;
 
+  drupal_add_js($tracking_code, 'inline');
 }
 
 /**
