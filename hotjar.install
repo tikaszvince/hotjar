@@ -8,17 +8,7 @@
  * Implements hook_uninstall().
  */
 function hotjar_uninstall() {
-  $variables = array(
-    'hotjar_account',
-    'hotjar_visibility_pages',
-    'hotjar_pages',
-    'hotjar_visibility_roles',
-    'hotjar_roles',
-    'hotjar_settings',
-  );
-  foreach ($variables as $variable) {
-    variable_del($variable);
-  }
+  variable_del('hotjar_settings');
 }
 
 /**
