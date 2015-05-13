@@ -175,10 +175,8 @@ function _hotjar_check_roles($account = NULL) {
   // The hotjar_roles stores the selected roles as an array where
   // the keys are the role IDs. When the role is not selected the
   // value is 0. If a role is selected the value is the role ID.
-  // Checking if $roles is not suitable for us because the roles
-  // has keys. But if no role is selected the sum of the values
-  // is zero.
-  if (array_sum($roles) > 0) {
+  $checked_roles = array_filter($roles);
+  if (!empty($checked_roles)) {
     foreach (array_keys($account->roles) as $rid) {
       if (isset($roles[$rid]) && $rid == $roles[$rid]) {
         $enabled = !$visibility;
