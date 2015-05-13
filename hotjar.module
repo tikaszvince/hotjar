@@ -20,7 +20,7 @@ define('HOTJAR_PAGES', "admin\nadmin/*\nbatch\nnode/add*\nnode/*/*\nuser/*/*");
 function hotjar_help($path, $arg) {
   switch ($path) {
     case 'admin/help#hotjar':
-    case 'admin/config/system/hotjar':
+    case 'admin/settings/hotjar':
       return t('<a href="@hotjar_url">Hotjar</a> is a new powerful way to reveal true website user behaviour and experiences in one central tool – giving you the big picture of how you can improve your site\'s UX and conversion rates. All your data is securely stored in the cloud and is accessible at lightning speed.', array('@hotjar_url' => 'https://www.hotjar.com/'));
   }
 }
