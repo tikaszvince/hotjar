@@ -19,6 +19,7 @@ function hotjar_admin_settings_form($form_state) {
     '#size' => 15,
     '#maxlength' => 20,
     '#required' => TRUE,
+    '#description' => t('Your Hotjar ID can be found in your tracking code on the line <code>h._hjSettings={hjid:<b>12345</b>,hjsv:5};</code> where <code><b>12345</b></code> is your Hotjar ID'),
   );
 
   $form['tracking'] = array(
