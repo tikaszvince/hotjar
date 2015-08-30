@@ -28,18 +28,6 @@ function hotjar_help($path, $arg) {
 }
 
 /**
- * Implements hook_permission().
- */
-function hotjar_permission() {
-  return array(
-    'administer hotjar' => array(
-      'title' => t('Administer Hotjar'),
-      'description' => t('Perform maintenance tasks for Hotjar.'),
-    ),
-  );
-}
-
-/**
  * Implements hook_menu().
  */
 function hotjar_menu() {
