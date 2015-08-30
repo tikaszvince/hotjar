@@ -14,7 +14,7 @@ use Drupal\Component\Utility\Unicode;
  *
  * See http://drupal.org/node/34970 for more information.
  */
-define('HOTJAR_PAGES', "admin\nadmin/*\nbatch\nnode/add*\nnode/*/*\nuser/*/*");
+define('HOTJAR_PAGES', "/admin\n/admin/*\n/batch\n/node/add*\n/node/*/*\n/user/*/*");
 
 /**
  * Implements hook_help().
