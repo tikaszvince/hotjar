@@ -149,7 +149,7 @@ function _hotjar_should_be_added() {
  */
 function _hotjar_check_user($account = NULL) {
   if (!isset($account)) {
-    $account = $GLOBALS['user'];
+    $account = \Drupal::currentUser();
   }
 
   $enabled = FALSE;
@@ -165,8 +165,9 @@ function _hotjar_check_user($account = NULL) {
  * Check user role.
  */
 function _hotjar_check_roles($account = NULL) {
+  /** @var Drupal\Core\Session\AccountProxy $account */
   if (!isset($account)) {
-    $account = $GLOBALS['user'];
+    $account = \Drupal::currentUser();
   }
 
   $settings = hotjar_get_settings();
@@ -183,7 +184,7 @@ function _hotjar_check_roles($account = NULL) {
   // The hotjar_roles stores the selected roles as an array where
   // the keys are the role IDs. When the role is not selected the
   // value is 0. If a role is selected the value is the role ID.
-  if (count(array_intersect_key($account->roles, $checked_roles))) {
+  if (count(array_intersect_key($account->getRoles(), $checked_roles))) {
     $enabled = !$visibility;
   }
 
