@@ -35,7 +35,7 @@ Hotjar user account
 INSTALLATION
 ------------
 Install as you would normally install a contributed Drupal module.
-See: https://drupal.org/documentation/install/modules-themes/modules-7
+See: https://drupal.org/documentation/install/modules-themes/modules-8
 for further information.
 
 
@@ -48,12 +48,12 @@ and it's on the url when you visit the site dashboard.
 The default is set to "Add to every page except the listed pages".
 By default the following pages are listed for exclusion:
 
-admin
-admin/*
-batch
-node/add*
-node/*/*
-user/*/*
+/admin
+/admin/*
+/batch
+/node/add*
+/node/*/*
+/user/*/*
 
 
 MAINTAINERS
