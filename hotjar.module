@@ -193,10 +193,14 @@ function _hotjar_check_roles($account = NULL) {
  */
 function _hotjar_check_status() {
   // Get page status code for visibility filtering.
-  $status = drupal_get_http_header('Status');
+  $request = \Drupal::request();
+  $status = NULL;
+  if ($exception = $request->attributes->get('exception')) {
+    $status = $exception->getStatusCode();
+  }
   $not_tracked_status_codes = array(
-    '403 Forbidden',
-    '404 Not Found',
+    '403',
+    '404',
   );
   return !in_array($status, $not_tracked_status_codes);
 }
