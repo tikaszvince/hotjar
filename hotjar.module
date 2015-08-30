@@ -57,7 +57,7 @@ function hotjar_menu() {
  * Get Hotjar settings.
  */
 function hotjar_get_settings() {
-  $settings = variable_get('hotjar_settings', array());
+  $settings = (array) \Drupal::config('hotjar')->get('settings');
   $settings += array(
     'hotjar_account' => NULL,
     'hotjar_visibility_pages' => 0,
