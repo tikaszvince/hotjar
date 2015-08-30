@@ -49,7 +49,7 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
       '#maxlength' => 20,
       '#required' => TRUE,
       '#size' => 15,
-      '#title' => t('Web Property ID'),
+      '#title' => t('Hotjar ID'),
       '#type' => 'textfield',
     ];
 
