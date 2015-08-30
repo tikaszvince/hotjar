@@ -28,22 +28,6 @@ function hotjar_help($path, $arg) {
 }
 
 /**
- * Implements hook_menu().
- */
-function hotjar_menu() {
-  $items['admin/config/system/hotjar'] = array(
-    'title' => 'Hotjar',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('hotjar_admin_settings_form'),
-    'access arguments' => array('administer hotjar'),
-    'type' => MENU_NORMAL_ITEM,
-    'file' => 'hotjar.admin.inc',
-  );
-
-  return $items;
-}
-
-/**
  * Get Hotjar settings.
  */
 function hotjar_get_settings() {
