@@ -47,13 +47,13 @@ function hotjar_menu() {
  * Get Hotjar settings.
  */
 function hotjar_get_settings() {
-  $settings = (array) \Drupal::config('hotjar')->get('settings');
+  $settings = (array) \Drupal::config('hotjar.settings')->getOriginal();
   $settings += array(
-    'hotjar_account' => NULL,
-    'hotjar_visibility_pages' => 0,
-    'hotjar_pages' => HOTJAR_PAGES,
-    'hotjar_visibility_roles' => 0,
-    'hotjar_roles' => array(),
+    'account' => NULL,
+    'visibility_pages' => 0,
+    'pages' => HOTJAR_PAGES,
+    'visibility_roles' => 0,
+    'roles' => array(),
   );
   return $settings;
 }
@@ -65,7 +65,7 @@ function hotjar_get_settings() {
  */
 function hotjar_page_attachments(array &$attachments) {
   $settings = hotjar_get_settings();
-  $id = $settings['hotjar_account'];
+  $id = $settings['account'];
 
   if (
     !$id
@@ -110,8 +110,8 @@ function _hotjar_should_be_added() {
 
   $settings = hotjar_get_settings();
 
-  $visibility = $settings['hotjar_visibility_pages'];
-  $setting_pages = $settings['hotjar_pages'];
+  $visibility = $settings['visibility_pages'];
+  $setting_pages = $settings['pages'];
 
   if (empty($setting_pages)) {
     $page_match = TRUE;
@@ -165,9 +165,9 @@ function _hotjar_check_roles($account = NULL) {
   }
 
   $settings = hotjar_get_settings();
-  $visibility = $settings['hotjar_visibility_roles'];
+  $visibility = $settings['visibility_roles'];
   $enabled = $visibility;
-  $roles = $settings['hotjar_roles'];
+  $roles = $settings['roles'];
 
   $checked_roles = array_filter($roles);
   if (empty($checked_roles)) {
