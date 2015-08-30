@@ -71,11 +71,11 @@ function hotjar_get_settings() {
 }
 
 /**
- * Implements hook_preprocess_page().
+ * Implements hook_page_attachments().
  *
  * Insert JavaScript to the <head> tag of the page.
  */
-function hotjar_preprocess_page(&$variables) {
+function hotjar_page_attachments(array &$attachments) {
   $settings = hotjar_get_settings();
   $id = $settings['hotjar_account'];
 
@@ -102,7 +102,13 @@ function hotjar_preprocess_page(&$variables) {
 })(window,document,'//static.hotjar.com/c/hotjar-','.js?sv=');
 HJ;
 
-  drupal_add_js($tracking_code, 'inline');
+  $attachments['#attached']['html_head'][] = [
+    [
+      '#tag' => 'script',
+      '#value' => $tracking_code,
+    ],
+    'hotjar_tracking_code'
+  ];
 }
 
 /**
