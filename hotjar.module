@@ -7,6 +7,8 @@
  * tracking by hotjar (https://www.hotjar.com/).
  */
 
+use Drupal\Component\Utility\Unicode;
+
 /**
  * Define default path exclusion list to remove tracking from admin pages.
  *
@@ -122,13 +124,13 @@ function _hotjar_should_be_added() {
     return $page_match;
   }
 
-  $pages = drupal_strtolower($setting_pages);
+  $pages = Unicode::strtolower($setting_pages);
   if ($visibility < 2) {
-    $path = drupal_strtolower(drupal_get_path_alias($_GET['q']));
-    $page_match = drupal_match_path($path, $pages);
-    if ($path != $_GET['q']) {
-      $page_match = $page_match || drupal_match_path($_GET['q'], $pages);
-    }
+    $path = \Drupal::service('path.current')->getPath();
+    $path_alias = Unicode::strtolower(\Drupal::service('path.alias_manager')->getAliasByPath($path));
+    $path_match = \Drupal::service('path.matcher')->matchPath($path_alias, $pages);
+    $alias_match = (($path != $path_alias) && \Drupal::service('path.matcher')->matchPath($path, $pages));
+    $page_match = $path_match || $alias_match;
 
     // When $visibility has a value of 0, the tracking code is displayed on
     // all pages except those listed in $pages. When set to 1, it
