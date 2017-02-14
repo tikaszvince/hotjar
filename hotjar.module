@@ -65,6 +65,13 @@ function hotjar_get_settings() {
     'hotjar_visibility_roles' => 0,
     'hotjar_roles' => array(),
   );
+
+  foreach ($settings as $name => $value) {
+    if (array_key_exists($name, $GLOBALS['conf'])) {
+      $settings[$name] = $GLOBALS['conf'][$name];
+    }
+  }
+
   return $settings;
 }
 
