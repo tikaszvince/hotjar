@@ -1,10 +1,4 @@
 <?php
-/**
- * @file
- * Administrative page callbacks for the hotjar module.
- *
- * Contains \Drupal\hotjar\Form\HotjarAdminSettingsForm.
- */
 
 namespace Drupal\hotjar\Form;
 
@@ -39,17 +33,17 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
 
     $form['general'] = [
       '#type' => 'details',
-      '#title' => t('General settings'),
+      '#title' => $this->t('General settings'),
       '#open' => TRUE,
     ];
 
     $form['general']['hotjar_account'] = [
       '#default_value' => $settings['account'],
-      '#description' => t('Your Hotjar ID can be found in your tracking code on the line <code>h._hjSettings={hjid:<b>12345</b>,hjsv:5};</code> where <code><b>12345</b></code> is your Hotjar ID'),
+      '#description' => $this->t('Your Hotjar ID can be found in your tracking code on the line <code>h._hjSettings={hjid:<b>12345</b>,hjsv:5};</code> where <code><b>12345</b></code> is your Hotjar ID'),
       '#maxlength' => 20,
       '#required' => TRUE,
       '#size' => 15,
-      '#title' => t('Hotjar ID'),
+      '#title' => $this->t('Hotjar ID'),
       '#type' => 'textfield',
     ];
 
@@ -59,7 +53,7 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
     // Visibility settings.
     $form['tracking']['page_track'] = [
       '#type' => 'details',
-      '#title' => t('Pages'),
+      '#title' => $this->t('Pages'),
       '#group' => 'tracking_scope',
       '#open' => TRUE,
     ];
@@ -79,12 +73,12 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
         '%blog-wildcard' => 'blog/*',
         '%front' => '<front>',
       ];
-      $description = t("Specify pages by using their paths. Enter one path per line. The '*' character is a wildcard. Example paths are %blog for the blog page and %blog-wildcard for every personal blog. %front is the front page.", $description_args);
-      $title = t('Pages');
+      $description = $this->t("Specify pages by using their paths. Enter one path per line. The '*' character is a wildcard. Example paths are %blog for the blog page and %blog-wildcard for every personal blog. %front is the front page.", $description_args);
+      $title = $this->t('Pages');
 
       $form['tracking']['page_track']['hotjar_visibility_pages'] = [
         '#type' => 'radios',
-        '#title' => t('Add tracking to specific pages'),
+        '#title' => $this->t('Add tracking to specific pages'),
         '#options' => $options,
         '#default_value' => $visibility,
       ];
@@ -103,27 +97,27 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
 
     $form['tracking']['role_track'] = [
       '#type' => 'details',
-      '#title' => t('Roles'),
+      '#title' => $this->t('Roles'),
       '#group' => 'tracking_scope',
       '#open' => TRUE,
     ];
 
     $form['tracking']['role_track']['hotjar_visibility_roles'] = [
       '#type' => 'radios',
-      '#title' => t('Add tracking for specific roles'),
+      '#title' => $this->t('Add tracking for specific roles'),
       '#options' => [
-        t('Add to the selected roles only'),
-        t('Add to every role except the selected ones'),
+        $this->t('Add to the selected roles only'),
+        $this->t('Add to every role except the selected ones'),
       ],
       '#default_value' => $settings['visibility_roles'],
     ];
     $role_options = array_map(['\Drupal\Component\Utility\SafeMarkup', 'checkPlain'], user_role_names());
     $form['tracking']['role_track']['hotjar_roles'] = [
       '#type' => 'checkboxes',
-      '#title' => t('Roles'),
+      '#title' => $this->t('Roles'),
       '#default_value' => !empty($visibility_roles) ? $visibility_roles : [],
       '#options' => $role_options,
-      '#description' => t('If none of the roles are selected, all users will be tracked. If a user has any of the roles checked, that user will be tracked (or excluded, depending on the setting above).'),
+      '#description' => $this->t('If none of the roles are selected, all users will be tracked. If a user has any of the roles checked, that user will be tracked (or excluded, depending on the setting above).'),
     ];
 
     return parent::buildForm($form, $form_state);
