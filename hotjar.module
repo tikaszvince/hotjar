@@ -129,14 +129,14 @@ HJ;
 function _hotjar_access() {
   $settings = hotjar_get_settings();
   $id = $settings['hotjar_account'];
-  $results = array(
+  $access = array(
     'hotjar_id' => (bool) $id,
     'hotjar_status' => _hotjar_check_status(),
     'hotjar_path' => _hotjar_should_be_added(),
     'hotjar_role' => _hotjar_check_user(),
   );
   foreach (module_implements('hotjar_access') as $module) {
-    $results[$module] = module_invoke($module, 'hotjar_access');
+    $access[$module] = module_invoke($module, 'hotjar_access');
   }
 
   drupal_alter('hotjar_access', $access);
