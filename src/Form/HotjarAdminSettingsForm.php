@@ -47,6 +47,16 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
     ];
 
+    $form['general']['hotjar_snippet_version'] = [
+      '#default_value' => $settings['snippet_version'],
+      '#description' => $this->t('Your Hotjar snippet version is near your Hotjar ID<code>h._hjSettings={hjid:12345,hjsv:<b>5</b>};</code> where <code><b>5</b></code> is your Hotjar snippet version'),
+      '#maxlength' => 10,
+      '#required' => TRUE,
+      '#size' => 5,
+      '#title' => $this->t('Hotjar snippet version'),
+      '#type' => 'textfield',
+    ];
+
     $visibility = $settings['visibility_pages'];
     $pages = $settings['pages'];
 
@@ -131,6 +141,7 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
 
     // Trim some text values.
     $form_state->setValue('hotjar_account', trim($form_state->getValue('hotjar_account')));
+    $form_state->setValue('hotjar_snippet_version', trim($form_state->getValue('hotjar_snippet_version')));
     $form_state->setValue('hotjar_pages', trim($form_state->getValue('hotjar_pages')));
     $form_state->setValue('hotjar_roles', array_filter($form_state->getValue('hotjar_roles')));
 
@@ -154,6 +165,7 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
     $config = $this->config('hotjar.settings');
     $config
       ->set('account', $form_state->getValue('hotjar_account'))
+      ->set('snippet_version', $form_state->getValue('hotjar_snippet_version'))
       ->set('visibility_pages', $form_state->getValue('hotjar_visibility_pages'))
       ->set('pages', $form_state->getValue('hotjar_pages'))
       ->set('visibility_roles', $form_state->getValue('hotjar_visibility_roles'))

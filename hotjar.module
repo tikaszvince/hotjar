@@ -33,11 +33,16 @@ function hotjar_get_settings() {
   $settings = (array) \Drupal::config('hotjar.settings')->getOriginal();
   $settings += array(
     'account' => NULL,
+    'snippet_version' => 6,
     'visibility_pages' => 0,
     'pages' => HOTJAR_PAGES,
     'visibility_roles' => 0,
     'roles' => array(),
   );
+
+  if (empty($settings['snippet_version'])) {
+    $settings['snippet_version'] = 6;
+  }
   return $settings;
 }
 
@@ -49,6 +54,7 @@ function hotjar_get_settings() {
 function hotjar_page_attachments(array &$attachments) {
   $settings = hotjar_get_settings();
   $id = $settings['account'];
+  $version = $settings['snippet_version'];
 
   if (
     !$id
@@ -61,6 +67,7 @@ function hotjar_page_attachments(array &$attachments) {
 
   // Use escaped HotjarID.
   $clean_id = json_encode($id, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+  $clean_version = json_encode($version, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
 
   // Quote from the Hotjar dashboard:
   // "The Tracking Code below should be placed in the <head> tag of
@@ -68,7 +75,7 @@ function hotjar_page_attachments(array &$attachments) {
   $tracking_code = <<<HJ
 (function(h,o,t,j,a,r){
   h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
-  h._hjSettings={hjid:{$clean_id},hjsv:5};
+  h._hjSettings={hjid:{$clean_id},hjsv:{$clean_version}};
   a=o.getElementsByTagName('head')[0];
   r=o.createElement('script');r.async=1;
   r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;

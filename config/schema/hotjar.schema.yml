@@ -7,6 +7,9 @@ hotjar.settings:
     account:
       type: string
       label: 'Hotjar ID'
+    snippet_version:
+      type: integer
+      label: 'Hotjar version'
     visibility_pages:
       type: integer
       label: 'Add tracking to specific pages'
