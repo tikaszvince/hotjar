@@ -21,6 +21,16 @@ function hotjar_admin_settings_form($form_state) {
     '#required' => TRUE,
     '#description' => t('Your Hotjar ID can be found in your tracking code on the line <code>h._hjSettings={hjid:<b>12345</b>,hjsv:5};</code> where <code><b>12345</b></code> is your Hotjar ID'),
   );
+  $form['hotjar_snippet_version'] = array(
+    '#parents' => array('hotjar_settings', 'hotjar_snippet_version'),
+    '#title' => t('Hotjar version'),
+    '#type' => 'textfield',
+    '#default_value' => $settings['hotjar_snippet_version'],
+    '#description' => t('Your Hotjar version is near your Hotjar ID<code>h._hjSettings={hjid:12345,hjsv:<b>6</b>};</code> where <code><b>6</b></code> is your Hotjar version'),
+    '#maxlength' => 10,
+    '#required' => TRUE,
+    '#size' => 5,
+  );
 
   $form['tracking'] = array(
     '#type' => 'vertical_tabs',
