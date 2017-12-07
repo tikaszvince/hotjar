@@ -15,6 +15,9 @@ use Drupal\Component\Utility\Unicode;
  * See http://drupal.org/node/34970 for more information.
  */
 define('HOTJAR_PAGES', "/admin\n/admin/*\n/batch\n/node/add*\n/node/*/*\n/user/*/*");
+define('HOTJAR_ACCESS_ALLOW', TRUE);
+define('HOTJAR_ACCESS_DENY', FALSE);
+define('HOTJAR_ACCESS_IGNORE', NULL);
 
 /**
  * Implements hook_help().
@@ -56,12 +59,7 @@ function hotjar_page_attachments(array &$attachments) {
   $id = $settings['account'];
   $version = $settings['snippet_version'];
 
-  if (
-    !$id
-    || !_hotjar_check_status()
-    || !_hotjar_should_be_added()
-    || !_hotjar_check_user()
-  ) {
+  if (!$id || !_hotjar_access()) {
     return;
   }
 
@@ -90,6 +88,30 @@ HJ;
     ],
     'hotjar_tracking_code'
   ];
+}
+
+/**
+ * Determines whether we add tracking code to page.
+ */
+function _hotjar_access() {
+  $settings = hotjar_get_settings();
+  $id = $settings['hotjar_account'];
+
+  $access = [
+    'hotjar_id' => (bool) $id,
+    'hotjar_status' => _hotjar_check_status(),
+    'hotjar_path' => _hotjar_should_be_added(),
+    'hotjar_role' => _hotjar_check_user(),
+  ];
+
+  $module_handler = \Drupal::moduleHandler();
+  foreach ($module_handler->getImplementations('hotjar_access') as $module) {
+    $access[$module] = $module_handler->invoke($module, 'hotjar_access');
+  }
+
+  $module_handler->alter('hotjar_access', $access);
+
+  return !in_array(HOTJAR_ACCESS_DENY, $access, TRUE);
 }
 
 /**
