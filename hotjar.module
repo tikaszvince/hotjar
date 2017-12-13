@@ -95,7 +95,7 @@ HJ;
  */
 function _hotjar_access() {
   $settings = hotjar_get_settings();
-  $id = $settings['hotjar_account'];
+  $id = $settings['account'];
 
   $access = [
     'hotjar_id' => (bool) $id,
