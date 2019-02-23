@@ -12,3 +12,15 @@ services:
     class: Drupal\hotjar\HotjarSettings
     arguments:
       - '@config.factory'
+
+  hotjar.access:
+    class: Drupal\hotjar\SnippetAccess
+    arguments:
+      - '@hotjar.settings'
+      - '@module_handler'
+      - '@config.factory'
+      - '@path.current'
+      - '@path.alias_manager'
+      - '@path.matcher'
+      - '@current_user'
+      - '@request_stack'
