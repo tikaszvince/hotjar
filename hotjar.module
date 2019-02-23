@@ -92,17 +92,7 @@ function hotjar_page_attachments(array &$attachments) {
     return;
   }
 
-  $uri = 'public://hotjar/hotjar.script.js';
-  $query_string = \Drupal::state()->get('system.css_js_query_string') ?: '0';
-  $query_string_separator = (strpos($uri, '?') !== FALSE) ? '&' : '?';
-
-  $url = file_url_transform_relative(file_create_url($uri));
-  $attachments['#attached']['html_head'][] = [
-    [
-      '#type' => 'html_tag',
-      '#tag' => 'script',
-      '#attributes' => ['src' => $url . $query_string_separator . $query_string],
-    ],
-    'hotjar_script_tag',
-  ];
+  /** @var \Drupal\hotjar\SnippetBuilderInterface $snippet */
+  $snippet = \Drupal::service('hotjar.snippet');
+  $snippet->pageAttachment($attachments);
 }
