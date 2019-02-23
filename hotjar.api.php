@@ -4,6 +4,8 @@
  * Hooks provided by the Hotjar module.
  */
 
+use Drupal\Core\Access\AccessResult;
+
 /**
  * @addtogroup hooks
  * @{
@@ -15,7 +17,7 @@
  * Modules may implement this hook if they want to disable tracking for some
  * reasons.
  *
- * @return bool|null
+ * @return \Drupal\Core\Access\AccessResultInterface|bool|null
  *   - HOTJAR_ACCESS_ALLOW: If tracking is allowed.
  *   - HOTJAR_ACCESS_DENY: If tracking is disabled.
  *   - HOTJAR_ACCESS_IGNORE: If tracking check is
@@ -24,7 +26,10 @@
  */
 function hook_hotjar_access() {
   // Disable for frontpage.
-  return \Drupal::service('path.matcher')->isFrontPage() ? HOTJAR_ACCESS_DENY : HOTJAR_ACCESS_ALLOW;
+  if (\Drupal::service('path.matcher')->isFrontPage()) {
+    return AccessResult::forbidden();
+  }
+  return AccessResult::neutral();
 }
 
 /**
@@ -32,7 +37,13 @@ function hook_hotjar_access() {
  */
 function hook_hotjar_access_alter(&$results) {
   // Force disable for frontpage.
-  $results['my_module_check'] = \Drupal::service('path.matcher')->isFrontPage() ? HOTJAR_ACCESS_DENY : HOTJAR_ACCESS_ALLOW;
+  if (\Drupal::service('path.matcher')->isFrontPage()) {
+    $result = AccessResult::forbidden();
+  }
+  else {
+    $result = AccessResult::neutral();
+  }
+  $results['my_module_check'] = $result;
 }
 
 /**
