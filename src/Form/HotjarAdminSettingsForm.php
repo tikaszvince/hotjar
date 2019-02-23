@@ -2,14 +2,48 @@
 
 namespace Drupal\hotjar\Form;
 
-use Drupal\Component\Utility\SafeMarkup;
+use Drupal\Core\Asset\AssetCollectionOptimizerInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger\MessengerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Configure Hotjar settings for this site.
  */
 class HotjarAdminSettingsForm extends ConfigFormBase {
+
+  /**
+   * JS collection optimizer.
+   *
+   * @var \Drupal\Core\Asset\AssetCollectionOptimizerInterface
+   */
+  protected $jsCollectionOptimizer;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(
+    ConfigFactoryInterface $config_factory,
+    AssetCollectionOptimizerInterface $js_collection_optimizer,
+    MessengerInterface $messenger
+  ) {
+    parent::__construct($config_factory);
+    $this->jsCollectionOptimizer = $js_collection_optimizer;
+    $this->messenger = $messenger;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('config.factory'),
+      $container->get('asset.js.collection_optimizer'),
+      $container->get('messenger')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -75,8 +109,8 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
     }
     else {
       $options = [
-        t('Every page except the listed pages'),
-        t('The listed pages only'),
+        $this->t('Every page except the listed pages'),
+        $this->t('The listed pages only'),
       ];
       $description_args = [
         '%blog' => 'blog',
@@ -150,7 +184,10 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
       $pages = preg_split('/(\r\n?|\n)/', $form_state->getValue('hotjar_pages'));
       foreach ($pages as $page) {
         if (strpos($page, '/') !== 0 && $page !== '<front>') {
-          $form_state->setErrorByName('hotjar_pages', t('Path "@page" not prefixed with slash.', ['@page' => $page]));
+          $form_state->setErrorByName(
+            'hotjar_pages',
+            $this->t('Path "@page" not prefixed with slash.', ['@page' => $page])
+          );
           // Drupal forms show one error only.
           break;
         }
@@ -193,7 +230,7 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
       $result = $this->saveSnippets();
     }
     else {
-      drupal_set_message($this->t('Failed to create or make writable the directory %directory, possibly due to a permissions problem. Make the directory writable.', array('%directory' => $directory)), 'warning');
+      $this->messenger()->addWarning($this->t('Failed to create or make writable the directory %directory, possibly due to a permissions problem. Make the directory writable.', ['%directory' => $directory]));
     }
     return $result;
   }
@@ -211,14 +248,15 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
     $path = file_unmanaged_save_data($snippet, 'public://hotjar/hotjar.script.js', FILE_EXISTS_REPLACE);
 
     if ($path === FALSE) {
-      drupal_set_message($this->t('An error occurred saving one or more snippet files. Please try again or contact the site administrator if it persists.'));
+      $this->messenger()->addMessage($this->t('An error occurred saving one or more snippet files. Please try again or contact the site administrator if it persists.'));
       return FALSE;
     }
 
-    drupal_set_message($this->t('Created three snippet files based on configuration.'));
-    \Drupal::service('asset.js.collection_optimizer')->deleteAll();
+    $this->messenger()->addMessage($this->t('Created three snippet files based on configuration.'));
+    $this->jsCollectionOptimizer->deleteAll();
     _drupal_flush_css_js();
 
     return TRUE;
   }
+
 }

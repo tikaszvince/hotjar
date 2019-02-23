@@ -8,6 +8,7 @@
  */
 
 use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\hotjar\Form\HotjarAdminSettingsForm;
 
 /**
@@ -15,18 +16,20 @@ use Drupal\hotjar\Form\HotjarAdminSettingsForm;
  *
  * See http://drupal.org/node/34970 for more information.
  */
+// @codingStandardsIgnoreStart
 define('HOTJAR_PAGES', "/admin\n/admin/*\n/batch\n/node/add*\n/node/*/*\n/user/*/*");
 define('HOTJAR_ACCESS_ALLOW', TRUE);
 define('HOTJAR_ACCESS_DENY', FALSE);
 define('HOTJAR_ACCESS_IGNORE', NULL);
+// @codingStandardsIgnoreEnd
 
 /**
  * Implements hook_help().
  */
-function hotjar_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route_match) {
+function hotjar_help($route_name, RouteMatchInterface $route_match) {
   switch ($route_name) {
     case 'hotjar.admin_settings_form':
-      return t('<a href="@hotjar_url">Hotjar</a> is a new powerful way to reveal true website user behaviour and experiences in one central tool – giving you the big picture of how you can improve your site\'s UX and conversion rates. All your data is securely stored in the cloud and is accessible at lightning speed.', array('@hotjar_url' => 'https://www.hotjar.com/'));
+      return t('<a href="@hotjar_url">Hotjar</a> is a new powerful way to reveal true website user behaviour and experiences in one central tool – giving you the big picture of how you can improve your site\'s UX and conversion rates. All your data is securely stored in the cloud and is accessible at lightning speed.', ['@hotjar_url' => 'https://www.hotjar.com/']);
   }
 }
 
@@ -44,14 +47,14 @@ function hotjar_rebuild() {
  */
 function hotjar_get_settings() {
   $settings = (array) \Drupal::config('hotjar.settings')->getOriginal();
-  $settings += array(
+  $settings += [
     'account' => NULL,
     'snippet_version' => 6,
     'visibility_pages' => 0,
     'pages' => HOTJAR_PAGES,
     'visibility_roles' => 0,
-    'roles' => array(),
-  );
+    'roles' => [],
+  ];
 
   if (empty($settings['snippet_version'])) {
     $settings['snippet_version'] = 6;
@@ -212,10 +215,10 @@ function _hotjar_check_status() {
   if ($exception = $request->attributes->get('exception')) {
     $status = $exception->getStatusCode();
   }
-  $not_tracked_status_codes = array(
+  $not_tracked_status_codes = [
     '403',
     '404',
-  );
+  ];
   return !in_array($status, $not_tracked_status_codes);
 }
 
@@ -236,8 +239,8 @@ function _hotjar_get_snippet($id, $version) {
   $clean_version = json_encode($version, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
 
   // Quote from the Hotjar dashboard:
-  // "The Tracking Code below should be placed in the <head> tag of
-  // every page you want to track on your site."
+  // The Tracking Code below should be placed in the <head> tag of
+  // every page you want to track on your site.
   $script = <<<HJ
 (function(h,o,t,j,a,r){
   h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
