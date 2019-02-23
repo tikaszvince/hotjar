@@ -6,3 +6,8 @@ services:
       - '@module_handler'
       - '@asset.js.collection_optimizer'
       - '@messenger'
+
+  hotjar.settings:
+    class: Drupal\hotjar\HotjarSettings
+    arguments:
+      - '@config.factory'
