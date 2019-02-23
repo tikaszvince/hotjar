@@ -8,6 +8,7 @@
  */
 
 use Drupal\Component\Utility\Unicode;
+use Drupal\hotjar\Form\HotjarAdminSettingsForm;
 
 /**
  * Define default path exclusion list to remove tracking from admin pages.
@@ -27,6 +28,15 @@ function hotjar_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $rout
     case 'hotjar.admin_settings_form':
       return t('<a href="@hotjar_url">Hotjar</a> is a new powerful way to reveal true website user behaviour and experiences in one central tool – giving you the big picture of how you can improve your site\'s UX and conversion rates. All your data is securely stored in the cloud and is accessible at lightning speed.', array('@hotjar_url' => 'https://www.hotjar.com/'));
   }
+}
+
+/**
+ * Implements hook_rebuild().
+ */
+function hotjar_rebuild() {
+  $config_factory = \Drupal::configFactory();
+  $form = new HotjarAdminSettingsForm($config_factory);
+  $form->createAssets();
 }
 
 /**
@@ -56,37 +66,26 @@ function hotjar_get_settings() {
  */
 function hotjar_page_attachments(array &$attachments) {
   $settings = hotjar_get_settings();
-  $id = $settings['account'];
-  $version = $settings['snippet_version'];
-
-  if (!$id || !_hotjar_access()) {
+  if (empty($settings['account']) || !_hotjar_access()) {
     return;
   }
 
-  // Use escaped HotjarID.
-  $clean_id = json_encode($id, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
-  $clean_version = json_encode($version, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+  if (_hotjar_cookieconstent_disable() === TRUE) {
+    return;
+  }
 
-  // Quote from the Hotjar dashboard:
-  // "The Tracking Code below should be placed in the <head> tag of
-  // every page you want to track on your site."
-  $tracking_code = <<<HJ
-(function(h,o,t,j,a,r){
-  h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
-  h._hjSettings={hjid:{$clean_id},hjsv:{$clean_version}};
-  a=o.getElementsByTagName('head')[0];
-  r=o.createElement('script');r.async=1;
-  r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
-  a.appendChild(r);
-})(window,document,'//static.hotjar.com/c/hotjar-','.js?sv=');
-HJ;
+  $uri = 'public://hotjar/hotjar.script.js';
+  $query_string = \Drupal::state()->get('system.css_js_query_string') ?: '0';
+  $query_string_separator = (strpos($uri, '?') !== FALSE) ? '&' : '?';
 
+  $url = file_url_transform_relative(file_create_url($uri));
   $attachments['#attached']['html_head'][] = [
     [
+      '#type' => 'html_tag',
       '#tag' => 'script',
-      '#value' => $tracking_code,
+      '#attributes' => ['src' => $url . $query_string_separator . $query_string],
     ],
-    'hotjar_tracking_code'
+    'hotjar_script_tag',
   ];
 }
 
@@ -95,6 +94,9 @@ HJ;
  */
 function _hotjar_access() {
   $settings = hotjar_get_settings();
+  if (empty($settings['account'])) {
+    return FALSE;
+  }
   $id = $settings['account'];
 
   $access = [
@@ -215,4 +217,64 @@ function _hotjar_check_status() {
     '404',
   );
   return !in_array($status, $not_tracked_status_codes);
+}
+
+/**
+ * Get Hotjar snippet code.
+ *
+ * @param string $id
+ *   Hotjar account ID.
+ * @param string $version
+ *   Hotjar API version.
+ *
+ * @return mixed|string
+ *   Hotjar snippet.
+ */
+function _hotjar_get_snippet($id, $version) {
+  // Use escaped HotjarID.
+  $clean_id = json_encode($id, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+  $clean_version = json_encode($version, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+
+  // Quote from the Hotjar dashboard:
+  // "The Tracking Code below should be placed in the <head> tag of
+  // every page you want to track on your site."
+  $script = <<<HJ
+(function(h,o,t,j,a,r){
+  h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+  h._hjSettings={hjid:{$clean_id},hjsv:{$clean_version}};
+  a=o.getElementsByTagName('head')[0];
+  r=o.createElement('script');r.async=1;
+  r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+  a.appendChild(r);
+})(window,document,'//static.hotjar.com/c/hotjar-','.js?sv=');
+HJ;
+
+  // Compact script if core aggregation or advagg module are enabled.
+  $config = \Drupal::config('system.performance');
+  if ($config->get('js.preprocess', TRUE) === TRUE || \Drupal::moduleHandler()->moduleExists('advagg')) {
+    $script = str_replace(["\n", '  '], '', $script);
+  }
+
+  return $script;
+}
+
+/**
+ * Check if any cookie constent module disable hotjar snipet.
+ *
+ * @return bool|null
+ *   Return TRUE if hotjar script needs constent.
+ */
+function _hotjar_cookieconstent_disable() {
+  /** @var \Drupal\Core\Extension\ModuleHandlerInterface $module_handler */
+  $module_handler = \Drupal::moduleHandler();
+  if ($module_handler->moduleExists('eu_cookie_compliance')) {
+    $config = Drupal::config('eu_cookie_compliance.settings');
+    $disabled_javascripts = $config->get('disabled_javascripts');
+    $disabled_javascripts = _eu_cookie_compliance_explode_multiple_lines($disabled_javascripts);
+    if (in_array('sites/default/files/hotjar/hotjar.script.js', $disabled_javascripts)) {
+      return TRUE;
+    }
+  }
+
+  return NULL;
 }

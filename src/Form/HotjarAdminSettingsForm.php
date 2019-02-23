@@ -173,5 +173,52 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
       ->save();
 
     parent::submitForm($form, $form_state);
+
+    $this->createAssets();
+  }
+
+  /**
+   * Prepares directory for and saves snippet files based on current settings.
+   *
+   * @return bool
+   *   Whether the files were saved.
+   */
+  public function createAssets(): bool {
+    $result = TRUE;
+    $directory = 'public://hotjar';
+    if (!is_dir($directory) || !is_writable($directory)) {
+      $result = file_prepare_directory($directory, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
+    }
+    if ($result) {
+      $result = $this->saveSnippets();
+    }
+    else {
+      drupal_set_message($this->t('Failed to create or make writable the directory %directory, possibly due to a permissions problem. Make the directory writable.', array('%directory' => $directory)), 'warning');
+    }
+    return $result;
+  }
+
+  /**
+   * Saves JS snippet files based on current settings.
+   *
+   * @return bool
+   *   Whether the files were saved.
+   */
+  public function saveSnippets(): bool {
+    // @TODO Is this really necessary?
+    $settings = hotjar_get_settings();
+    $snippet = _hotjar_get_snippet($settings['account'], $settings['snippet_version']);
+    $path = file_unmanaged_save_data($snippet, 'public://hotjar/hotjar.script.js', FILE_EXISTS_REPLACE);
+
+    if ($path === FALSE) {
+      drupal_set_message($this->t('An error occurred saving one or more snippet files. Please try again or contact the site administrator if it persists.'));
+      return FALSE;
+    }
+
+    drupal_set_message($this->t('Created three snippet files based on configuration.'));
+    \Drupal::service('asset.js.collection_optimizer')->deleteAll();
+    _drupal_flush_css_js();
+
+    return TRUE;
   }
 }
