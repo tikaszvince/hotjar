@@ -13,6 +13,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class HotjarSettings implements HotjarSettingsInterface, ContainerInjectionInterface {
 
+  const HOTJAR_PAGES = "/admin\n/admin/*\n/batch\n/node/add*\n/node/*/*\n/user/*/*";
+
   /**
    * Hotjar config.
    *
@@ -59,7 +61,7 @@ class HotjarSettings implements HotjarSettingsInterface, ContainerInjectionInter
         'account' => NULL,
         'snippet_version' => 6,
         'visibility_pages' => 0,
-        'pages' => HOTJAR_PAGES,
+        'pages' => static::HOTJAR_PAGES,
         'visibility_roles' => 0,
         'roles' => [],
       ];
