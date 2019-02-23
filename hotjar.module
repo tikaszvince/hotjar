@@ -7,7 +7,6 @@
  * tracking by hotjar (https://www.hotjar.com/).
  */
 
-use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
@@ -87,12 +86,9 @@ function hotjar_get_settings() {
  * Insert JavaScript to the <head> tag of the page.
  */
 function hotjar_page_attachments(array &$attachments) {
-  $settings = hotjar_get_settings();
-  if (empty($settings['account']) || !_hotjar_access()) {
-    return;
-  }
-
-  if (_hotjar_cookieconstent_disable() === TRUE) {
+  /** @var \Drupal\hotjar\SnippetAccessInterface $access */
+  $access = \Drupal::service('hotjar.access');
+  if (!$access->check()) {
     return;
   }
 
@@ -109,155 +105,4 @@ function hotjar_page_attachments(array &$attachments) {
     ],
     'hotjar_script_tag',
   ];
-}
-
-/**
- * Determines whether we add tracking code to page.
- */
-function _hotjar_access() {
-  $settings = hotjar_get_settings();
-  if (empty($settings['account'])) {
-    return FALSE;
-  }
-  $id = $settings['account'];
-
-  $access = [
-    'hotjar_id' => (bool) $id,
-    'hotjar_status' => _hotjar_check_status(),
-    'hotjar_path' => _hotjar_should_be_added(),
-    'hotjar_role' => _hotjar_check_user(),
-  ];
-
-  $module_handler = \Drupal::moduleHandler();
-  foreach ($module_handler->getImplementations('hotjar_access') as $module) {
-    $access[$module] = $module_handler->invoke($module, 'hotjar_access');
-  }
-
-  $module_handler->alter('hotjar_access', $access);
-
-  return !in_array(HOTJAR_ACCESS_DENY, $access, TRUE);
-}
-
-/**
- * Check Hotjar code should be added.
- */
-function _hotjar_should_be_added() {
-  $page_match = &drupal_static(__FUNCTION__);
-  if (isset($page_match)) {
-    return $page_match;
-  }
-
-  $settings = hotjar_get_settings();
-
-  $visibility = $settings['visibility_pages'];
-  $setting_pages = $settings['pages'];
-
-  if (empty($setting_pages)) {
-    $page_match = TRUE;
-    return $page_match;
-  }
-
-  $pages = Unicode::strtolower($setting_pages);
-  if ($visibility < 2) {
-    $path = \Drupal::service('path.current')->getPath();
-    $path_alias = Unicode::strtolower(\Drupal::service('path.alias_manager')->getAliasByPath($path));
-    $path_match = \Drupal::service('path.matcher')->matchPath($path_alias, $pages);
-    $alias_match = (($path != $path_alias) && \Drupal::service('path.matcher')->matchPath($path, $pages));
-    $page_match = $path_match || $alias_match;
-
-    // When $visibility has a value of 0, the tracking code is displayed on
-    // all pages except those listed in $pages. When set to 1, it
-    // is displayed only on those pages listed in $pages.
-    $page_match = !($visibility xor $page_match);
-  }
-  else {
-    $page_match = FALSE;
-  }
-
-  return $page_match;
-}
-
-/**
- * Check Hotjar code should be added for user.
- */
-function _hotjar_check_user($account = NULL) {
-  if (!isset($account)) {
-    $account = \Drupal::currentUser();
-  }
-
-  $enabled = FALSE;
-  if (_hotjar_check_roles($account)) {
-    $enabled = TRUE;
-  }
-
-  return $enabled;
-
-}
-
-/**
- * Check user role.
- */
-function _hotjar_check_roles($account = NULL) {
-  /** @var Drupal\Core\Session\AccountProxy $account */
-  if (!isset($account)) {
-    $account = \Drupal::currentUser();
-  }
-
-  $settings = hotjar_get_settings();
-  $visibility = $settings['visibility_roles'];
-  $enabled = $visibility;
-  $roles = $settings['roles'];
-
-  // The hotjar_roles stores the selected roles as an array where
-  // the keys are the role IDs. When the role is not selected the
-  // value is 0. If a role is selected the value is the role ID.
-  $checked_roles = array_filter($roles);
-  if (empty($checked_roles)) {
-    // No role is selected for tracking, therefore all roles should be tracked.
-    return TRUE;
-  }
-
-  if (count(array_intersect($account->getRoles(), $checked_roles))) {
-    $enabled = !$visibility;
-  }
-
-  return $enabled;
-}
-
-/**
- * Check current request HTTP status.
- */
-function _hotjar_check_status() {
-  // Get page status code for visibility filtering.
-  $request = \Drupal::request();
-  $status = NULL;
-  if ($exception = $request->attributes->get('exception')) {
-    $status = $exception->getStatusCode();
-  }
-  $not_tracked_status_codes = [
-    '403',
-    '404',
-  ];
-  return !in_array($status, $not_tracked_status_codes);
-}
-
-/**
- * Check if any cookie constent module disable hotjar snipet.
- *
- * @return bool|null
- *   Return TRUE if hotjar script needs constent.
- */
-function _hotjar_cookieconstent_disable() {
-  /** @var \Drupal\Core\Extension\ModuleHandlerInterface $module_handler */
-  $module_handler = \Drupal::moduleHandler();
-  if ($module_handler->moduleExists('eu_cookie_compliance')) {
-    $config = Drupal::config('eu_cookie_compliance.settings');
-    $disabled_javascripts = $config->get('disabled_javascripts');
-    $disabled_javascripts = _eu_cookie_compliance_explode_multiple_lines($disabled_javascripts);
-    if (in_array('sites/default/files/hotjar/hotjar.script.js', $disabled_javascripts)) {
-      return TRUE;
-    }
-  }
-
-  return NULL;
 }
