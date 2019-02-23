@@ -2,11 +2,10 @@
 
 namespace Drupal\hotjar\Form;
 
-use Drupal\Core\Asset\AssetCollectionOptimizerInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\hotjar\SnippetBuilderInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -15,23 +14,21 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class HotjarAdminSettingsForm extends ConfigFormBase {
 
   /**
-   * JS collection optimizer.
+   * Snippet builder.
    *
-   * @var \Drupal\Core\Asset\AssetCollectionOptimizerInterface
+   * @var \Drupal\hotjar\SnippetBuilderInterface
    */
-  protected $jsCollectionOptimizer;
+  protected $snippetBuilder;
 
   /**
    * {@inheritdoc}
    */
   public function __construct(
     ConfigFactoryInterface $config_factory,
-    AssetCollectionOptimizerInterface $js_collection_optimizer,
-    MessengerInterface $messenger
+    SnippetBuilderInterface $snippet_builder
   ) {
     parent::__construct($config_factory);
-    $this->jsCollectionOptimizer = $js_collection_optimizer;
-    $this->messenger = $messenger;
+    $this->snippetBuilder = $snippet_builder;
   }
 
   /**
@@ -40,8 +37,7 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
-      $container->get('asset.js.collection_optimizer'),
-      $container->get('messenger')
+      $container->get('hotjar.snippet')
     );
   }
 
@@ -211,52 +207,7 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
 
     parent::submitForm($form, $form_state);
 
-    $this->createAssets();
-  }
-
-  /**
-   * Prepares directory for and saves snippet files based on current settings.
-   *
-   * @return bool
-   *   Whether the files were saved.
-   */
-  public function createAssets(): bool {
-    $result = TRUE;
-    $directory = 'public://hotjar';
-    if (!is_dir($directory) || !is_writable($directory)) {
-      $result = file_prepare_directory($directory, FILE_CREATE_DIRECTORY | FILE_MODIFY_PERMISSIONS);
-    }
-    if ($result) {
-      $result = $this->saveSnippets();
-    }
-    else {
-      $this->messenger()->addWarning($this->t('Failed to create or make writable the directory %directory, possibly due to a permissions problem. Make the directory writable.', ['%directory' => $directory]));
-    }
-    return $result;
-  }
-
-  /**
-   * Saves JS snippet files based on current settings.
-   *
-   * @return bool
-   *   Whether the files were saved.
-   */
-  public function saveSnippets(): bool {
-    // @TODO Is this really necessary?
-    $settings = hotjar_get_settings();
-    $snippet = _hotjar_get_snippet($settings['account'], $settings['snippet_version']);
-    $path = file_unmanaged_save_data($snippet, 'public://hotjar/hotjar.script.js', FILE_EXISTS_REPLACE);
-
-    if ($path === FALSE) {
-      $this->messenger()->addMessage($this->t('An error occurred saving one or more snippet files. Please try again or contact the site administrator if it persists.'));
-      return FALSE;
-    }
-
-    $this->messenger()->addMessage($this->t('Created three snippet files based on configuration.'));
-    $this->jsCollectionOptimizer->deleteAll();
-    _drupal_flush_css_js();
-
-    return TRUE;
+    $this->snippetBuilder->createAssets();
   }
 
 }

@@ -1,0 +1,8 @@
+services:
+  hotjar.snippet:
+    class: Drupal\hotjar\SnippetBuilder
+    arguments:
+      - '@config.factory'
+      - '@module_handler'
+      - '@asset.js.collection_optimizer'
+      - '@messenger'

@@ -9,7 +9,6 @@
 
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Routing\RouteMatchInterface;
-use Drupal\hotjar\Form\HotjarAdminSettingsForm;
 
 /**
  * Define default path exclusion list to remove tracking from admin pages.
@@ -37,9 +36,9 @@ function hotjar_help($route_name, RouteMatchInterface $route_match) {
  * Implements hook_rebuild().
  */
 function hotjar_rebuild() {
-  $config_factory = \Drupal::configFactory();
-  $form = new HotjarAdminSettingsForm($config_factory);
-  $form->createAssets();
+  /** @var \Drupal\hotjar\SnippetBuilderInterface $snippet_builder */
+  $snippet_builder = \Drupal::service('hotjar.snippet');
+  $snippet_builder->createAssets();
 }
 
 /**
@@ -220,45 +219,6 @@ function _hotjar_check_status() {
     '404',
   ];
   return !in_array($status, $not_tracked_status_codes);
-}
-
-/**
- * Get Hotjar snippet code.
- *
- * @param string $id
- *   Hotjar account ID.
- * @param string $version
- *   Hotjar API version.
- *
- * @return mixed|string
- *   Hotjar snippet.
- */
-function _hotjar_get_snippet($id, $version) {
-  // Use escaped HotjarID.
-  $clean_id = json_encode($id, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
-  $clean_version = json_encode($version, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
-
-  // Quote from the Hotjar dashboard:
-  // The Tracking Code below should be placed in the <head> tag of
-  // every page you want to track on your site.
-  $script = <<<HJ
-(function(h,o,t,j,a,r){
-  h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
-  h._hjSettings={hjid:{$clean_id},hjsv:{$clean_version}};
-  a=o.getElementsByTagName('head')[0];
-  r=o.createElement('script');r.async=1;
-  r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
-  a.appendChild(r);
-})(window,document,'//static.hotjar.com/c/hotjar-','.js?sv=');
-HJ;
-
-  // Compact script if core aggregation or advagg module are enabled.
-  $config = \Drupal::config('system.performance');
-  if ($config->get('js.preprocess', TRUE) === TRUE || \Drupal::moduleHandler()->moduleExists('advagg')) {
-    $script = str_replace(["\n", '  '], '', $script);
-  }
-
-  return $script;
 }
 
 /**
