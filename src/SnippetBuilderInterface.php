@@ -17,4 +17,9 @@ interface SnippetBuilderInterface {
    */
   public function createAssets();
 
+  /**
+   * Implements hook_page_attachment().
+   */
+  public function pageAttachment(array &$attachments);
+
 }

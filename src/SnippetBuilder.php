@@ -7,6 +7,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\State\StateInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -18,6 +19,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class SnippetBuilder implements SnippetBuilderInterface, ContainerInjectionInterface {
 
   use StringTranslationTrait;
+
+  /**
+   * State storage.
+   *
+   * @var \Drupal\Core\State\StateInterface
+   */
+  protected $state;
 
   /**
    * Config factory.
@@ -57,6 +65,8 @@ class SnippetBuilder implements SnippetBuilderInterface, ContainerInjectionInter
   /**
    * SnippetBuilder constructor.
    *
+   * @param \Drupal\Core\State\StateInterface $state
+   *   Store storage.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   Config factory.
    * @param \Drupal\hotjar\HotjarSettingsInterface $settings
@@ -69,12 +79,14 @@ class SnippetBuilder implements SnippetBuilderInterface, ContainerInjectionInter
    *   Messenger service.
    */
   public function __construct(
+    StateInterface $state,
     ConfigFactoryInterface $config_factory,
     HotjarSettingsInterface $settings,
     ModuleHandlerInterface $module_handler,
     AssetCollectionOptimizerInterface $js_collection_optimizer,
     MessengerInterface $messenger
   ) {
+    $this->state = $state;
     $this->configFactory = $config_factory;
     $this->settings = $settings;
     $this->moduleHandler = $module_handler;
@@ -87,12 +99,32 @@ class SnippetBuilder implements SnippetBuilderInterface, ContainerInjectionInter
    */
   public static function create(ContainerInterface $container) {
     return new static(
+      $container->get('state'),
       $container->get('config.factory'),
       $container->get('hotjar.settings'),
       $container->get('module_handler'),
       $container->get('asset.js.collection_optimizer'),
       $container->get('messenger')
     );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function pageAttachment(array &$attachments) {
+    $uri = 'public://hotjar/hotjar.script.js';
+    $query_string = $this->state->get('system.css_js_query_string') ?: '0';
+    $query_string_separator = (strpos($uri, '?') !== FALSE) ? '&' : '?';
+
+    $url = file_url_transform_relative(file_create_url($uri));
+    $attachments['#attached']['html_head'][] = [
+      [
+        '#type' => 'html_tag',
+        '#tag' => 'script',
+        '#attributes' => ['src' => $url . $query_string_separator . $query_string],
+      ],
+      'hotjar_script_tag',
+    ];
   }
 
   /**

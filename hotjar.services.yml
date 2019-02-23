@@ -2,6 +2,7 @@ services:
   hotjar.snippet:
     class: Drupal\hotjar\SnippetBuilder
     arguments:
+      - '@state'
       - '@config.factory'
       - '@hotjar.settings'
       - '@module_handler'
