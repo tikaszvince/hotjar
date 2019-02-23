@@ -45,20 +45,9 @@ function hotjar_rebuild() {
  * Get Hotjar settings.
  */
 function hotjar_get_settings() {
-  $settings = (array) \Drupal::config('hotjar.settings')->getOriginal();
-  $settings += [
-    'account' => NULL,
-    'snippet_version' => 6,
-    'visibility_pages' => 0,
-    'pages' => HOTJAR_PAGES,
-    'visibility_roles' => 0,
-    'roles' => [],
-  ];
-
-  if (empty($settings['snippet_version'])) {
-    $settings['snippet_version'] = 6;
-  }
-  return $settings;
+  /** @var \Drupal\hotjar\HotjarSettingsInterface $service */
+  $service = \Drupal::service('hotjar.settings');
+  return $service->getSettings();
 }
 
 /**

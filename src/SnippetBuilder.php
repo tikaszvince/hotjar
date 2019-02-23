@@ -27,6 +27,13 @@ class SnippetBuilder implements SnippetBuilderInterface, ContainerInjectionInter
   protected $configFactory;
 
   /**
+   * Hotjar settings.
+   *
+   * @var \Drupal\hotjar\HotjarSettingsInterface
+   */
+  protected $settings;
+
+  /**
    * Module handler.
    *
    * @var \Drupal\Core\Extension\ModuleHandlerInterface
@@ -52,6 +59,8 @@ class SnippetBuilder implements SnippetBuilderInterface, ContainerInjectionInter
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   Config factory.
+   * @param \Drupal\hotjar\HotjarSettingsInterface $settings
+   *   Hotjar settings.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   Module handler.
    * @param \Drupal\Core\Asset\AssetCollectionOptimizerInterface $js_collection_optimizer
@@ -61,11 +70,13 @@ class SnippetBuilder implements SnippetBuilderInterface, ContainerInjectionInter
    */
   public function __construct(
     ConfigFactoryInterface $config_factory,
+    HotjarSettingsInterface $settings,
     ModuleHandlerInterface $module_handler,
     AssetCollectionOptimizerInterface $js_collection_optimizer,
     MessengerInterface $messenger
   ) {
     $this->configFactory = $config_factory;
+    $this->settings = $settings;
     $this->moduleHandler = $module_handler;
     $this->jsCollectionOptimizer = $js_collection_optimizer;
     $this->messenger = $messenger;
@@ -77,6 +88,7 @@ class SnippetBuilder implements SnippetBuilderInterface, ContainerInjectionInter
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
+      $container->get('hotjar.settings'),
       $container->get('module_handler'),
       $container->get('asset.js.collection_optimizer'),
       $container->get('messenger')
@@ -108,8 +120,7 @@ class SnippetBuilder implements SnippetBuilderInterface, ContainerInjectionInter
    *   Whether the files were saved.
    */
   protected function saveSnippets() {
-    $settings = hotjar_get_settings();
-    $snippet = $this->buildSnippet($settings['account'], $settings['snippet_version']);
+    $snippet = $this->buildSnippet();
     $path = file_unmanaged_save_data($snippet, 'public://hotjar/hotjar.script.js', FILE_EXISTS_REPLACE);
 
     if ($path === FALSE) {
@@ -127,18 +138,13 @@ class SnippetBuilder implements SnippetBuilderInterface, ContainerInjectionInter
   /**
    * Get Hotjar snippet code.
    *
-   * @param string $id
-   *   Hotjar account ID.
-   * @param string $version
-   *   Hotjar API version.
-   *
    * @return mixed|string
    *   Hotjar snippet.
    */
-  protected function buildSnippet($id, $version) {
+  protected function buildSnippet() {
     // Use escaped HotjarID.
-    $clean_id = json_encode($id, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
-    $clean_version = json_encode($version, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+    $clean_id = $this->escapeValue($this->settings->getSetting('account'));
+    $clean_version = $this->escapeValue($this->settings->getSetting('snippet_version'));
 
     // Quote from the Hotjar dashboard:
     // The Tracking Code below should be placed in the <head> tag of
@@ -163,6 +169,13 @@ HJ;
     }
 
     return $script;
+  }
+
+  /**
+   * Escape value.
+   */
+  protected function escapeValue($value) {
+    return json_encode($value, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
   }
 
   /**

@@ -3,6 +3,7 @@ services:
     class: Drupal\hotjar\SnippetBuilder
     arguments:
       - '@config.factory'
+      - '@hotjar.settings'
       - '@module_handler'
       - '@asset.js.collection_optimizer'
       - '@messenger'

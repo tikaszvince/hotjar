@@ -5,6 +5,7 @@ namespace Drupal\hotjar\Form;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\hotjar\HotjarSettingsInterface;
 use Drupal\hotjar\SnippetBuilderInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -12,6 +13,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Configure Hotjar settings for this site.
  */
 class HotjarAdminSettingsForm extends ConfigFormBase {
+
+  /**
+   * Hotjar settings.
+   *
+   * @var \Drupal\hotjar\HotjarSettingsInterface
+   */
+  protected $hotjarSettings;
 
   /**
    * Snippet builder.
@@ -25,9 +33,11 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
    */
   public function __construct(
     ConfigFactoryInterface $config_factory,
+    HotjarSettingsInterface $hotjar_settings,
     SnippetBuilderInterface $snippet_builder
   ) {
     parent::__construct($config_factory);
+    $this->hotjarSettings = $hotjar_settings;
     $this->snippetBuilder = $snippet_builder;
   }
 
@@ -37,6 +47,7 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
+      $container->get('hotjar.settings'),
       $container->get('hotjar.snippet')
     );
   }
@@ -59,8 +70,6 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $settings = hotjar_get_settings();
-
     $form['general'] = [
       '#type' => 'details',
       '#title' => $this->t('General settings'),
@@ -68,7 +77,7 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
     ];
 
     $form['general']['hotjar_account'] = [
-      '#default_value' => $settings['account'],
+      '#default_value' => $this->hotjarSettings->getSetting('account'),
       '#description' => $this->t('Your Hotjar ID can be found in your tracking code on the line <code>h._hjSettings={hjid:<b>12345</b>,hjsv:5};</code> where <code><b>12345</b></code> is your Hotjar ID'),
       '#maxlength' => 20,
       '#required' => TRUE,
@@ -78,7 +87,7 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
     ];
 
     $form['general']['hotjar_snippet_version'] = [
-      '#default_value' => $settings['snippet_version'],
+      '#default_value' => $this->hotjarSettings->getSetting('snippet_version'),
       '#description' => $this->t('Your Hotjar snippet version is near your Hotjar ID<code>h._hjSettings={hjid:12345,hjsv:<b>5</b>};</code> where <code><b>5</b></code> is your Hotjar snippet version'),
       '#maxlength' => 10,
       '#required' => TRUE,
@@ -87,8 +96,8 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
     ];
 
-    $visibility = $settings['visibility_pages'];
-    $pages = $settings['pages'];
+    $visibility = $this->hotjarSettings->getSetting('visibility_pages');
+    $pages = $this->hotjarSettings->getSetting('pages');
 
     // Visibility settings.
     $form['tracking']['page_track'] = [
@@ -100,8 +109,14 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
 
     if ($visibility == 2) {
       $form['tracking']['page_track'] = [];
-      $form['tracking']['page_track']['hotjar_visibility_pages'] = ['#type' => 'value', '#value' => 2];
-      $form['tracking']['page_track']['hotjar_pages'] = ['#type' => 'value', '#value' => $pages];
+      $form['tracking']['page_track']['hotjar_visibility_pages'] = [
+        '#type' => 'value',
+        '#value' => 2,
+      ];
+      $form['tracking']['page_track']['hotjar_pages'] = [
+        '#type' => 'value',
+        '#value' => $pages,
+      ];
     }
     else {
       $options = [
@@ -133,7 +148,7 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
     }
 
     // Render the role overview.
-    $visibility_roles = $settings['roles'];
+    $visibility_roles = $this->hotjarSettings->getSetting('roles');
 
     $form['tracking']['role_track'] = [
       '#type' => 'details',
@@ -149,7 +164,7 @@ class HotjarAdminSettingsForm extends ConfigFormBase {
         $this->t('Add to the selected roles only'),
         $this->t('Add to every role except the selected ones'),
       ],
-      '#default_value' => $settings['visibility_roles'],
+      '#default_value' => $this->hotjarSettings->getSetting('visibility_roles'),
     ];
     $role_options = array_map(['\Drupal\Component\Utility\SafeMarkup', 'checkPlain'], user_role_names());
     $form['tracking']['role_track']['hotjar_roles'] = [
