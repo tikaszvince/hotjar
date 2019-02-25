@@ -147,7 +147,7 @@ class SnippetAccess implements SnippetAccessInterface, ContainerInjectionInterfa
    * {@inheritdoc}
    */
   public function check() {
-    if ($this->settings->getSetting('account')) {
+    if (!$this->settings->getSetting('account')) {
       return FALSE;
     }
 
