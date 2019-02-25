@@ -206,7 +206,7 @@ class SnippetAccess implements SnippetAccessInterface, ContainerInjectionInterfa
   /**
    * Check path.
    *
-   * @return bool|\Drupal\Core\Access\AccessResult
+   * @return \Drupal\Core\Access\AccessResult
    *   Path
    */
   protected function pathCheckResult() {
@@ -216,7 +216,7 @@ class SnippetAccess implements SnippetAccessInterface, ContainerInjectionInterfa
 
       if (!$setting_pages) {
         $this->pageMatch = TRUE;
-        return $this->pageMatch;
+        return AccessResult::allowed();
       }
 
       $pages = mb_strtolower($setting_pages);
@@ -243,7 +243,7 @@ class SnippetAccess implements SnippetAccessInterface, ContainerInjectionInterfa
   /**
    * Check Hotjar code should be added for user.
    *
-   * @return bool|\Drupal\Core\Access\AccessResult
+   * @return \Drupal\Core\Access\AccessResult
    *   Result.
    */
   protected function roleCheck() {
@@ -257,7 +257,7 @@ class SnippetAccess implements SnippetAccessInterface, ContainerInjectionInterfa
     $checked_roles = array_filter($roles);
     if (empty($checked_roles)) {
       // No role is selected for tracking, therefore all roles be tracked.
-      return TRUE;
+      return AccessResult::allowed();
     }
 
     if (count(array_intersect($this->currentUser->getRoles(), $checked_roles))) {
